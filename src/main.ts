@@ -6,6 +6,8 @@ import { renderStats } from "./components/todoStats";
 import { getElement } from "./utils/dom";
 import type { Todo, TodoFilter } from "./models/todo";
 
+const ANIMATION_DURATION = 300;
+let animateInId: string | null = null;
 const SCROLL_ZONE = 60;
 const SCROLL_SPEED = 3;
 let scrollAnimationId: number | null = null;
@@ -14,7 +16,6 @@ const service = new TodoService();
 const app = getElement<HTMLDivElement>("#app");
 let currentFilter: TodoFilter = "all";
 let draggedId: string | null = null;
-let lastDeleted: { todo: Todo; index: number } | null = null;
 let undoTimer: number | null = null;
 
 function render() {
@@ -46,7 +47,7 @@ function render() {
       </button>
     </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter)}
+      ${renderTodoList(todos, currentFilter, animateInId)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -87,9 +88,11 @@ function handleSubmit(e: Event): void {
   e.preventDefault();
   const input = document.getElementById("todo-input") as HTMLInputElement;
   if (input && input.value.trim()) {
-    service.addTodo(input.value);
+    const todo = service.addTodo(input.value);
     input.value = "";
+    animateInId = todo.id;
     render();
+    animateInId = null;
     focusInput();
   }
 }
@@ -98,8 +101,14 @@ function handleChange(e: Event): void {
   const target = e.target as HTMLInputElement;
   if (target.type !== "checkbox" || !target.dataset.id) return;
 
-  service.toggleTodo(target.dataset.id);
-  render();
+  const id = target.dataset.id;
+
+  animateExit(id, () => {
+    animateInId = id;
+    service.toggleTodo(id);
+    render();
+    animateInId = null;
+  });
 }
 
 function handleFilterClick(target: HTMLElement): void {
@@ -119,20 +128,36 @@ function handleClearCompleted(): void {
 
   if (removed.length === 0) return;
 
-  service.clearCompleted();
-  render();
+  const STAGGER = 40;
 
-  showUndoToast(
-    `${removed.length} completed todo${removed.length > 1 ? "s" : ""} cleared :`,
-    () => {
-      removed
-        .sort((a, b) => a.index - b.index)
-        .forEach(({ todo, index }) => {
-          service.restoreTodo(todo, index);
-        });
-      render();
-    },
-  );
+  removed.forEach(({ todo }, i) => {
+    const element = document.querySelector(
+      `.todo-item[data-id="${todo.id}"]`,
+    ) as HTMLElement;
+    element.style.transitionDelay = `${i * STAGGER}ms`;
+    element?.classList.add("exiting");
+  });
+
+  const totalDelay = ANIMATION_DURATION + (removed.length - 1) * STAGGER;
+
+  setTimeout(() => {
+    service.clearCompleted();
+    render();
+
+    showUndoToast(
+      `${removed.length} completed todo${removed.length > 1 ? "s" : ""} cleared :`,
+      () => {
+        removed
+          .sort((a, b) => a.index - b.index)
+          .forEach(({ todo, index }) => {
+            service.restoreTodo(todo, index);
+          });
+        animateInId = removed[0]?.todo.id ?? null;
+        render();
+        animateInId = null;
+      },
+    );
+  }, totalDelay);
 }
 
 function handleDelete(target: HTMLElement): void {
@@ -144,13 +169,18 @@ function handleDelete(target: HTMLElement): void {
   if (index === -1) return;
 
   const todo = todos[index];
-  service.deleteTodo(id);
-  render();
-
-  showUndoToast("Todo deleted :", () => {
-    service.restoreTodo(todo, index);
+  animateExit(id, () => {
+    service.deleteTodo(id);
     render();
+
+    showUndoToast("Todo deleted :", () => {
+      service.restoreTodo(todo, index);
+      animateInId = id;
+      render();
+      animateInId = null;
+    });
   });
+
   focusInput();
 }
 
@@ -366,6 +396,20 @@ function stopAutoScroll(): void {
     cancelAnimationFrame(scrollAnimationId);
     scrollAnimationId = null;
   }
+}
+
+function animateExit(elementId: string, callback: () => void): void {
+  const element = document.querySelector(
+    `.todo-item[data-id="${elementId}"]`,
+  ) as HTMLElement;
+  if (!element) {
+    callback();
+    return;
+  }
+
+  element.classList.add("exiting");
+
+  setTimeout(callback, ANIMATION_DURATION);
 }
 
 setupEventListeners();

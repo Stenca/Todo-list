@@ -1,6 +1,10 @@
 import { type Todo, type TodoFilter } from "../models/todo";
 
-export function renderTodoList(todos: Todo[], filter: TodoFilter): string {
+export function renderTodoList(
+  todos: Todo[],
+  filter: TodoFilter,
+  animateInId: string | null = null,
+): string {
   if (todos.length === 0) {
     const message = emptyMessageFor(filter);
     return `<div class="todo-empty">${message}</div>`;
@@ -10,7 +14,7 @@ export function renderTodoList(todos: Todo[], filter: TodoFilter): string {
   const completed = todos.filter((t) => t.completed);
 
   const renderItem = (todo: Todo) => `
-    <li class="todo-item" data-id="${todo.id}" draggable="true">
+    <li class="todo-item ${todo.id === animateInId ? "entering" : ""}" data-id="${todo.id}" draggable="true">
       <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
       <input 
         type="checkbox" 
