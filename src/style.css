@@ -108,6 +108,29 @@ h1 {
   opacity: 0.8;
 }
 
+.todo-search {
+  margin-bottom: 1rem;
+}
+
+.todo-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.todo-search-input:focus {
+  border-color: var(--accent);
+}
+
+.todo-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
 .todo-list {
   list-style: none;
   padding: 0;
@@ -213,7 +236,7 @@ h1 {
 }
 
 .todo-item-delete:hover {
-  color: var(--danger);
+  color: var(--accent);
 }
 
 .todo-item-edit {
@@ -245,12 +268,18 @@ h1 {
 }
 
 .todo-item.entering {
-  animation: todo-enter 0.3s ease;
+  animation: todo-enter 0.3s ease both;
 }
 
 .todo-item.exiting {
   opacity: 0;
   transform: translateX(-20px) scale(0.95);
+  max-height: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  animation: todo-exit 0.3s ease forwards;
+  pointer-events: none;
 }
 
 .todo-stats {
@@ -325,31 +354,32 @@ h1 {
 }
 
 .undo-toast {
-  margin-top: 1rem;
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(1rem);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   opacity: 0;
   transition:
     opacity 0.3s ease,
     transform 0.3s ease;
+  pointer-events: none;
   font-size: 0.875rem;
   color: var(--text-primary);
-  pointer-events: none;
-  position: absolute;
-  top: calc(50% + 260px); /* below the card — adjust as needed */
-  transform: translateX(-50%) translateY(-0.5rem);
+  z-index: 1000;
+  max-width: calc(100vw - 2rem);
 }
 
 .undo-toast.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
 
@@ -392,28 +422,41 @@ h1 {
   opacity: 0.5;
 }
 
-@keyframes todo-exit {
-  to {
-    opacity: 0;
-    transform: translateX(-20px) scale(0.95);
-  }
-}
-
 @keyframes todo-enter {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-20px) scale(0.95);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0) scale(1);
+    max-height: 60px;
+    margin-bottom: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 }
 
-@keyframes todo-complete {
+@keyframes todo-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    max-height: 60px;
+    margin-bottom: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
   to {
-    opacity: 0.5;
-    transform: translateX(20px);
+    opacity: 0;
+    transform: translateX(-20px) scale(0.95);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }
 

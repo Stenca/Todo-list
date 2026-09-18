@@ -1,13 +1,14 @@
 import { type Todo, type TodoFilter } from "../models/todo";
+import { escapeHtml } from "../utils/dom";
 
 export function renderTodoList(
   todos: Todo[],
   filter: TodoFilter,
   animateInId: string | null = null,
+  searchQuery = "",
 ): string {
   if (todos.length === 0) {
-    const message = emptyMessageFor(filter);
-    return `<div class="todo-empty">${message}</div>`;
+    return `<div class="todo-empty">${emptyMessageFor(filter, searchQuery)}</div>`;
   }
 
   const active = todos.filter((t) => !t.completed);
@@ -23,7 +24,7 @@ export function renderTodoList(
         class="todo-item-checkbox"
       />
       <span class="todo-item-text ${todo.completed ? "completed" : ""}">
-        ${todo.text}
+        ${escapeHtml(todo.text)}
       </span>
       <button data-id="${todo.id}" class="todo-item-edit" aria-label="Edit todo">✎</button>
       <button data-id="${todo.id}" class="todo-item-delete" aria-label="Delete todo">×</button>
@@ -45,16 +46,20 @@ export function renderTodoList(
       }
     </ul>
   `;
+}
 
-  function emptyMessageFor(filter: TodoFilter) {
-    switch (filter) {
-      case "active":
-        return "No active todos, nice work.";
-      case "completed":
-        return "No completed todos yet.";
-      case "all":
-      default:
-        return "No todos yet, add one above.";
-    }
+function emptyMessageFor(filter: TodoFilter, searchQuery: string) {
+  if (searchQuery.trim()) {
+    return `No todos match for : ${escapeHtml(searchQuery)}`;
+  }
+
+  switch (filter) {
+    case "active":
+      return "No active todos, nice work.";
+    case "completed":
+      return "No completed todos yet.";
+    case "all":
+    default:
+      return "No todos yet, add one above.";
   }
 }

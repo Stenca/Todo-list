@@ -5,3 +5,11 @@ export function getElement<T extends HTMLElement>(selector: string): T {
   }
   return element;
 }
+
+export function escapeHtml(string: string): string {
+  return string
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&qt;")
+    .replace(/"/g, "&quot;");
+}

@@ -3,27 +3,35 @@ import { TodoService } from "./services/todoService";
 import { renderTodoList } from "./components/todoList";
 import { renderTodoForm } from "./components/todoForm";
 import { renderStats } from "./components/todoStats";
-import { getElement } from "./utils/dom";
+import { escapeHtml, getElement } from "./utils/dom";
 import type { Todo, TodoFilter } from "./models/todo";
 
+const UNDO_TOAST_DURATION = 7000;
 const ANIMATION_DURATION = 300;
-let animateInId: string | null = null;
 const SCROLL_ZONE = 60;
 const SCROLL_SPEED = 3;
+const STAGGER = 40;
+const SEARCH_DEBOUNCE = 200;
+
+let animateInId: string | null = null;
 let scrollAnimationId: number | null = null;
 let scrollDirection = 0;
-const service = new TodoService();
-const app = getElement<HTMLDivElement>("#app");
-let currentFilter: TodoFilter = "all";
 let draggedId: string | null = null;
 let undoTimer: number | null = null;
+let searchQuery = "";
+let searchTimeout: number | null = null;
+
+const service = new TodoService();
+const app = getElement<HTMLDivElement>("#app");
+
+let currentFilter: TodoFilter = "all";
 
 function render() {
   const container = document.querySelector(
     ".todo-list-container",
   ) as HTMLElement;
   const scrollTop = container?.scrollTop ?? 0;
-  const todos = service.getSortedTodos(currentFilter);
+  const todos = getVisibleTodos();
   const stats = service.getStats();
 
   app.innerHTML = `
@@ -46,8 +54,17 @@ function render() {
       >Completed
       </button>
     </div>
+    <div class="todo-search">
+      <input
+        type="search"
+        id="todo-search"
+        class="todo-search-input"
+        placeholder="Search todos..."
+        value="${escapeHtml(searchQuery)}"
+      />
+    </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter, animateInId)}
+      ${renderTodoList(todos, currentFilter, animateInId, searchQuery)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -55,7 +72,6 @@ function render() {
     <button
       data-action="clear-completed" 
       id="clear-completed" 
-      class="todo-clear-btn"
       ${stats.completed === 0 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ""}
     >
       ${stats.completed > 0 ? `🗑️ Clear Completed (${stats.completed})` : "No completed todos"}
@@ -74,6 +90,7 @@ function setupEventListeners() {
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
   app.addEventListener("click", handleClick);
+  app.addEventListener("input", handleSearchInput);
 
   app.addEventListener("dragstart", handleDragStart);
   app.addEventListener("dragend", handleDragEnd);
@@ -128,13 +145,14 @@ function handleClearCompleted(): void {
 
   if (removed.length === 0) return;
 
-  const STAGGER = 40;
-
   removed.forEach(({ todo }, i) => {
     const element = document.querySelector(
       `.todo-item[data-id="${todo.id}"]`,
     ) as HTMLElement;
-    element.style.transitionDelay = `${i * STAGGER}ms`;
+
+    if (!element) return;
+
+    element.style.animationDelay = `${i * STAGGER}ms`;
     element?.classList.add("exiting");
   });
 
@@ -180,8 +198,6 @@ function handleDelete(target: HTMLElement): void {
       animateInId = null;
     });
   });
-
-  focusInput();
 }
 
 function handleEdit(target: HTMLElement): void {
@@ -212,6 +228,22 @@ function handleClick(e: Event): void {
     handleFilterClick(target);
     return;
   }
+}
+
+function handleSearchInput(e: Event): void {
+  const target = e.target as HTMLInputElement;
+  if (target.id !== "todo-search") return;
+
+  const value = target.value;
+  if (searchTimeout !== null) clearTimeout(searchTimeout);
+  searchTimeout = window.setTimeout(() => {
+    searchQuery = value;
+    render();
+
+    const newInput = document.getElementById("todo-search") as HTMLInputElement;
+    newInput?.focus();
+    newInput?.setSelectionRange(value.length, value.length);
+  }, SEARCH_DEBOUNCE);
 }
 
 function handleDragStart(e: DragEvent): void {
@@ -255,8 +287,8 @@ function handleDragOver(e: DragEvent): void {
 }
 
 function handleDrop(e: DragEvent): void {
-  stopAutoScroll();
   e.preventDefault();
+  stopAutoScroll();
   const target = e.target as HTMLElement;
   const todoItem = target.closest(".todo-item") as HTMLElement;
   if (!todoItem || !draggedId) return;
@@ -324,7 +356,8 @@ function showUndoToast(message: string, onUndo: () => void): void {
     <span>${message}</span>
     <button class="undo-btn" type="button">Undo</button>
   `;
-  app.parentElement?.insertBefore(toast, app.nextSibling);
+
+  document.body.appendChild(toast);
 
   requestAnimationFrame(() => toast.classList.add("visible"));
 
@@ -335,7 +368,7 @@ function showUndoToast(message: string, onUndo: () => void): void {
 
   undoTimer = window.setTimeout(() => {
     dismissToast();
-  }, 10000);
+  }, UNDO_TOAST_DURATION);
 }
 
 function dismissToast(): void {
@@ -347,7 +380,7 @@ function dismissToast(): void {
   const toast = document.querySelector(".undo-toast");
   if (!toast) return;
   toast.classList.remove("visible");
-  setTimeout(() => toast.remove(), 300);
+  setTimeout(() => toast.remove(), ANIMATION_DURATION);
 }
 
 function focusInput(): void {
@@ -410,6 +443,14 @@ function animateExit(elementId: string, callback: () => void): void {
   element.classList.add("exiting");
 
   setTimeout(callback, ANIMATION_DURATION);
+}
+
+function getVisibleTodos(): Todo[] {
+  const todos = service.getSortedTodos(currentFilter);
+  if (!searchQuery.trim()) return todos;
+
+  const q = searchQuery.toLowerCase();
+  return todos.filter((t) => t.text.toLowerCase().includes(q));
 }
 
 setupEventListeners();
