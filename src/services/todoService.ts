@@ -1,4 +1,4 @@
-import { type Todo, type TodoFilter } from "../models/todo";
+import { type Todo, type TodoFilter, type Subtask } from "../models/todo";
 
 export class TodoService {
   private todos: Todo[] = [];
@@ -6,6 +6,10 @@ export class TodoService {
 
   constructor() {
     this.loadFromStorage();
+  }
+
+  private findTodo(todoId: string): Todo | undefined {
+    return this.todos.find((t) => t.id === todoId);
   }
 
   private loadFromStorage(): void {
@@ -49,26 +53,62 @@ export class TodoService {
       text: text.trim(),
       completed: false,
       createdAt: new Date(),
+      subtasks: [],
     };
     this.todos.unshift(todo);
     this.saveToStorage();
     return todo;
   }
 
+  addSubtask(todoId: string, text: string): void {
+    const todo = this.findTodo(todoId);
+    const trimmed = text.trim();
+    if (!todo || trimmed) return;
+
+    todo.subtasks.push({
+      id: crypto.randomUUID(),
+      text: trimmed,
+      completed: false,
+    });
+    this.saveToStorage();
+  }
+
   toggleTodo(id: string): void {
-    const todo = this.todos.find((t) => t.id === id);
+    const todo = this.findTodo(id);
     if (todo) {
       todo.completed = !todo.completed;
       this.saveToStorage();
     }
   }
 
+  toggleSubtask(todoId: string, subtaskId: string): void {
+    const todo = this.findTodo(todoId);
+    if (!todo) return;
+    const subtask = todo.subtasks.find((s) => s.id === subtaskId);
+    if (!subtask) return;
+
+    subtask.completed = !subtask.completed;
+    this.saveToStorage();
+  }
+
   editTodo(id: string, newContent: string): void {
-    const todo = this.todos.find((t) => t.id === id);
-    if (todo && newContent.trim()) {
-      todo.text = newContent.trim();
+    const todo = this.findTodo(id);
+    const trimmed = newContent.trim();
+    if (todo && trimmed) {
+      todo.text = trimmed;
       this.saveToStorage();
     }
+  }
+
+  editSubtask(todoId: string, subtaskId: string, newContent: string): void {
+    const todo = this.findTodo(todoId);
+    const trimmed = newContent.trim();
+    if (!todo || !trimmed) return;
+    const subtask = todo.subtasks.find((s) => s.id === subtaskId);
+    if (!subtask) return;
+
+    subtask.text = trimmed;
+    this.saveToStorage();
   }
 
   reorderTodos(fromIndex: number, toIndex: number): void {
@@ -87,6 +127,14 @@ export class TodoService {
 
   deleteTodo(id: string): void {
     this.todos = this.todos.filter((t) => t.id !== id);
+    this.saveToStorage();
+  }
+
+  deleteSubtask(todoId: string, subtaskId: string): void {
+    const todo = this.findTodo(todoId);
+    if (!todo) return;
+
+    todo.subtasks = todo.subtasks.filter((s) => s.id !== subtaskId);
     this.saveToStorage();
   }
 

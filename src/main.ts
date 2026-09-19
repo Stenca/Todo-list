@@ -1,8 +1,8 @@
 import "./style.css";
 import { TodoService } from "./services/todoService";
-import { renderTodoList } from "./components/todoList";
-import { renderTodoForm } from "./components/todoForm";
-import { renderStats } from "./components/todoStats";
+import { renderTodoList } from "./components/renderTodoList";
+import { renderTodoForm } from "./components/renderTodoForm";
+import { renderStats } from "./components/renderTodoStats";
 import { escapeHtml, getElement } from "./utils/dom";
 import type { Todo, TodoFilter } from "./models/todo";
 
@@ -14,6 +14,7 @@ const STAGGER = 40;
 const SEARCH_DEBOUNCE = 200;
 
 let animateInId: string | null = null;
+let addingSubtaskForId: string | null = null;
 let scrollAnimationId: number | null = null;
 let scrollDirection = 0;
 let draggedId: string | null = null;
@@ -38,17 +39,17 @@ function render() {
     <h1>Todo List</h1>
     ${renderTodoForm()}
     <div id="todo-filters" class="todo-filters">
-      <button data-action="filter" 
+      <button
         data-filter="all"
         class="${currentFilter === "all" ? "active" : ""}"
       >All
       </button>
-      <button data-action="filter"
+      <button
         data-filter="active"
         class="${currentFilter === "active" ? "active" : ""}"
       >Active
       </button>
-      <button data-action="filter"
+      <button
         data-filter="completed"
         class="${currentFilter === "completed" ? "active" : ""}"
       >Completed
@@ -64,7 +65,7 @@ function render() {
       />
     </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter, animateInId, searchQuery)}
+      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -87,9 +88,10 @@ function render() {
 }
 
 function setupEventListeners() {
-  app.addEventListener("submit", handleSubmit);
+  app.addEventListener("submit", handleGlobalSubmit);
   app.addEventListener("change", handleChange);
   app.addEventListener("click", handleClick);
+  app.addEventListener("keydown", handleGlobalKeydown);
   app.addEventListener("input", handleSearchInput);
 
   app.addEventListener("dragstart", handleDragStart);
@@ -98,10 +100,21 @@ function setupEventListeners() {
   app.addEventListener("drop", handleDrop);
 }
 
-function handleSubmit(e: Event): void {
+function handleGlobalSubmit(e: Event): void {
   const form = e.target as HTMLFormElement;
-  if (form.id !== "todo-form") return;
 
+  if (form.id === "todo-form") {
+    handleTodoSubmit(e);
+    return;
+  }
+
+  if (form.classList.contains("subtask-add-form")) {
+    handleSubtaskSubmit(e);
+    return;
+  }
+}
+
+function handleTodoSubmit(e: Event): void {
   e.preventDefault();
   const input = document.getElementById("todo-input") as HTMLInputElement;
   if (input && input.value.trim()) {
@@ -112,6 +125,22 @@ function handleSubmit(e: Event): void {
     animateInId = null;
     focusInput();
   }
+}
+
+function handleSubtaskSubmit(e: Event): void {
+  e.preventDefault();
+
+  const form = e.target as HTMLFormElement;
+  const todoId = form.dataset.parentId;
+  const input = form.querySelector<HTMLInputElement>(".subtask-add-input");
+  const value = input?.value.trim();
+
+  if (todoId && value) {
+    service.addSubtask(todoId, value);
+  }
+
+  addingSubtaskForId = null;
+  render();
 }
 
 function handleChange(e: Event): void {
@@ -178,10 +207,7 @@ function handleClearCompleted(): void {
   }, totalDelay);
 }
 
-function handleDelete(target: HTMLElement): void {
-  const id = target.dataset.id;
-  if (!id) return;
-
+function handleDelete(id: string): void {
   const todos = service.getTodos();
   const index = todos.findIndex((t) => t.id === id);
   if (index === -1) return;
@@ -200,24 +226,28 @@ function handleDelete(target: HTMLElement): void {
   });
 }
 
-function handleEdit(target: HTMLElement): void {
-  const id = target.dataset.id;
-  if (!id) return;
+function handleEnterSubtask(todoId: string): void {
+  addingSubtaskForId = addingSubtaskForId === todoId ? null : todoId;
+  render();
+}
+
+function handleDeleteSubtask(target: HTMLElement): void {
+  const todoId = target.dataset.parentId;
+  const subtaskId = target.dataset.subtaskId;
+  if (!todoId || !subtaskId) return;
+
+  service.deleteSubtask(todoId, subtaskId);
+  render();
+}
+
+function handleEdit(id: string): void {
   startEditing(id);
 }
 
 function handleClick(e: Event): void {
   const target = e.target as HTMLElement;
-
-  if (target.classList.contains("todo-item-delete")) {
-    handleDelete(target);
-    return;
-  }
-
-  if (target.classList.contains("todo-item-edit")) {
-    handleEdit(target);
-    return;
-  }
+  const todoItem = target.closest<HTMLElement>(".todo-item");
+  const todoId = todoItem?.dataset.id ?? null;
 
   if (target.id === "clear-completed") {
     handleClearCompleted();
@@ -227,6 +257,66 @@ function handleClick(e: Event): void {
   if (target.dataset.filter) {
     handleFilterClick(target);
     return;
+  }
+
+  if (!todoId || !todoItem) return;
+
+  if (target.classList.contains("todo-item-add-subtask")) {
+    handleEnterSubtask(todoId);
+    return;
+  }
+
+  if (target.classList.contains("todo-item-delete")) {
+    handleDelete(todoId);
+    return;
+  }
+
+  if (target.classList.contains("subtask-delete")) {
+    handleDeleteSubtask(target);
+  }
+
+  if (target.classList.contains("todo-item-edit")) {
+    handleEdit(todoId);
+    return;
+  }
+}
+function handleGlobalKeydown(e: KeyboardEvent): void {
+  const target = e.target as HTMLElement;
+
+  if (target.classList.contains("subtask-add-input")) {
+    handleSubtaskKeyDown(e);
+    return;
+  }
+
+  if (target.classList.contains("todo-item-edit-input")) {
+    handleEditKeyDown(e);
+    return;
+  }
+}
+
+function handleSubtaskKeyDown(e: KeyboardEvent): void {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    addingSubtaskForId = null;
+    render();
+    return;
+  }
+}
+
+function handleEditKeyDown(e: KeyboardEvent): void {
+  const input = e.target as HTMLInputElement;
+  const id = input.dataset.id;
+  if (!id) return;
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    saveEdit(id, input.value);
+    return;
+  }
+
+  if (e.key === "Escape") {
+    e.preventDefault();
+    render();
   }
 }
 
@@ -326,11 +416,6 @@ function startEditing(id: string): void {
 
   input.focus();
   input.select();
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") saveEdit(id, input.value);
-    if (e.key === "Escape") render();
-  });
 
   input.addEventListener("blur", () => saveEdit(id, input.value));
 }
