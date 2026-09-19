@@ -65,6 +65,7 @@ export class TodoService {
     const trimmed = text.trim();
     if (!todo || trimmed) return;
 
+    todo.subtasks ??= [];
     todo.subtasks.push({
       id: crypto.randomUUID(),
       text: trimmed,
