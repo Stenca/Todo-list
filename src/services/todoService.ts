@@ -84,7 +84,7 @@ export class TodoService {
 
   toggleSubtask(todoId: string, subtaskId: string): void {
     const todo = this.findTodo(todoId);
-    if (!todo) return;
+    if (!todo?.subtasks) return;
     const subtask = todo.subtasks.find((s) => s.id === subtaskId);
     if (!subtask) return;
 

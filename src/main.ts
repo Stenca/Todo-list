@@ -145,16 +145,25 @@ function handleSubtaskSubmit(e: Event): void {
 
 function handleChange(e: Event): void {
   const target = e.target as HTMLInputElement;
-  if (target.type !== "checkbox" || !target.dataset.id) return;
 
-  const id = target.dataset.id;
+  if (target.classList.contains("subtask-checkbox")) {
+    const todoId = target.dataset.parentId;
+    const subtaskId = target.dataset.subtaskId;
+    if (todoId && subtaskId) {
+      service.toggleSubtask(todoId, subtaskId);
+      render();
+    }
+  }
 
-  animateExit(id, () => {
-    animateInId = id;
-    service.toggleTodo(id);
-    render();
-    animateInId = null;
-  });
+  if (target.type === "checkbox" && target.dataset.id) {
+    const id = target.dataset.id;
+    animateExit(id, () => {
+      animateInId = id;
+      service.toggleTodo(id);
+      render();
+      animateInId = null;
+    });
+  }
 }
 
 function handleFilterClick(target: HTMLElement): void {
