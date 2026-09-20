@@ -236,15 +236,14 @@ function handleDelete(id: string): void {
   });
 }
 
-function handleEnterSubtask(todoId: string): void {
-  addingSubtaskForId = addingSubtaskForId === todoId ? null : todoId;
-  render();
-}
-
 function handleDeleteSubtask(todoId: string, subtaskId: string): void {
   if (!todoId || !subtaskId) return;
 
   service.deleteSubtask(todoId, subtaskId);
+  render();
+}
+function handleEnterSubtask(todoId: string): void {
+  addingSubtaskForId = addingSubtaskForId === todoId ? null : todoId;
   render();
 }
 
