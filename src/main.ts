@@ -78,6 +78,14 @@ function render() {
     </button>
   `;
 
+  if (addingSubtaskForId) {
+    requestAnimationFrame(() => {
+      const input =
+        document.querySelector<HTMLInputElement>(".subtask-add-input");
+      input?.focus();
+    });
+  }
+
   const newContainer = document.querySelector(
     ".todo-list-container",
   ) as HTMLElement;
