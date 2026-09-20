@@ -153,6 +153,7 @@ function handleChange(e: Event): void {
       service.toggleSubtask(todoId, subtaskId);
       render();
     }
+    return;
   }
 
   if (target.type === "checkbox" && target.dataset.id) {
@@ -240,9 +241,7 @@ function handleEnterSubtask(todoId: string): void {
   render();
 }
 
-function handleDeleteSubtask(target: HTMLElement): void {
-  const todoId = target.dataset.parentId;
-  const subtaskId = target.dataset.subtaskId;
+function handleDeleteSubtask(todoId: string, subtaskId: string): void {
   if (!todoId || !subtaskId) return;
 
   service.deleteSubtask(todoId, subtaskId);
@@ -253,10 +252,15 @@ function handleEdit(id: string): void {
   startEditing(id);
 }
 
+function handleEditSubtask(todoId: string, subtaskId: string): void {
+  startEditingSubtask(todoId, subtaskId);
+}
+
 function handleClick(e: Event): void {
   const target = e.target as HTMLElement;
   const todoItem = target.closest<HTMLElement>(".todo-item");
   const todoId = todoItem?.dataset.id ?? null;
+  const subtaskId = target?.dataset.subtaskId ?? null;
 
   if (target.id === "clear-completed") {
     handleClearCompleted();
@@ -280,20 +284,34 @@ function handleClick(e: Event): void {
     return;
   }
 
-  if (target.classList.contains("subtask-delete")) {
-    handleDeleteSubtask(target);
-  }
-
   if (target.classList.contains("todo-item-edit")) {
     handleEdit(todoId);
     return;
   }
+
+  if (!subtaskId) return;
+
+  if (target.classList.contains("subtask-delete")) {
+    handleDeleteSubtask(todoId, subtaskId);
+    return;
+  }
+
+  if (target.classList.contains("subtask-edit")) {
+    handleEditSubtask(todoId, subtaskId);
+    return;
+  }
 }
+
 function handleGlobalKeydown(e: KeyboardEvent): void {
   const target = e.target as HTMLElement;
 
   if (target.classList.contains("subtask-add-input")) {
     handleSubtaskKeyDown(e);
+    return;
+  }
+
+  if (target.classList.contains("subtask-edit-input")) {
+    handleSubtaskEditKeyDown(e);
     return;
   }
 
@@ -320,6 +338,24 @@ function handleEditKeyDown(e: KeyboardEvent): void {
   if (e.key === "Enter") {
     e.preventDefault();
     saveEdit(id, input.value);
+    return;
+  }
+
+  if (e.key === "Escape") {
+    e.preventDefault();
+    render();
+  }
+}
+
+function handleSubtaskEditKeyDown(e: KeyboardEvent): void {
+  const input = e.target as HTMLInputElement;
+  const todoId = input.dataset.parentId;
+  const subtaskId = input.dataset.subtaskId;
+  if (!todoId || !subtaskId) return;
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    saveSubtaskEdit(todoId, subtaskId, input.value);
     return;
   }
 
@@ -402,29 +438,37 @@ function handleDrop(e: DragEvent): void {
   render();
 }
 
-function startEditing(id: string): void {
-  const todoItem = document.querySelector(`.todo-item[data-id="${id}"]`);
-  if (!todoItem) return;
+function replaceTextWithInput(
+  container: Element,
+  textSelector: string,
+  inputHtml: string,
+): HTMLInputElement | null {
+  const textEl = container.querySelector<HTMLElement>(textSelector);
+  if (!textEl) return null;
 
-  const textSpan = todoItem.querySelector(".todo-item-text") as HTMLElement;
-  const currentText = textSpan.textContent?.trim() || "";
-
-  textSpan.innerHTML = `
-    <input 
-      type="text" 
-      class="todo-item-edit-input" 
-      value="${currentText}"
-      data-id="${id}"
-    />
-  `;
-
-  const input = textSpan.querySelector(
-    ".todo-item-edit-input",
-  ) as HTMLInputElement;
-  if (!input) return;
+  textEl.innerHTML = inputHtml;
+  const input = textEl.querySelector<HTMLInputElement>("input");
+  if (!input) return null;
 
   input.focus();
   input.select();
+  return input;
+}
+
+function startEditing(id: string): void {
+  const item = document.querySelector(`.todo-item[data-id="${id}"]`);
+  if (!item) return;
+
+  const currentText =
+    item.querySelector(".todo-item-text")?.textContent?.trim() ?? "";
+
+  const input = replaceTextWithInput(
+    item,
+    ".todo-item-text",
+    `<input type="text" class="todo-item-edit-input" value="${escapeHtml(currentText)}" data-id="${id}" />`,
+  );
+
+  if (!input) return;
 
   input.addEventListener("blur", () => saveEdit(id, input.value));
 }
@@ -432,6 +476,39 @@ function startEditing(id: string): void {
 function saveEdit(id: string, newText: string): void {
   if (newText.trim()) {
     service.editTodo(id, newText);
+  }
+  render();
+}
+
+function startEditingSubtask(todoId: string, subtaskId: string): void {
+  const item = document.querySelector(
+    `.subtask-item[data-subtask-id="${subtaskId}"]`,
+  );
+  if (!item) return;
+
+  const currentText =
+    item.querySelector(".subtask-text")?.textContent?.trim() ?? "";
+
+  const input = replaceTextWithInput(
+    item,
+    ".subtask-text",
+    `<input type="text" class="subtask-edit-input" value="${escapeHtml(currentText)}" data-subtask-id="${subtaskId}" data-parent-id="${todoId}" />`,
+  );
+
+  if (!input) return;
+
+  input.addEventListener("blur", () =>
+    saveSubtaskEdit(todoId, subtaskId, input.value),
+  );
+}
+
+function saveSubtaskEdit(
+  todoId: string,
+  subtaskId: string,
+  newText: string,
+): void {
+  if (newText.trim()) {
+    service.editSubtask(todoId, subtaskId, newText);
   }
   render();
 }

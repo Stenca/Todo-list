@@ -12,6 +12,14 @@ export class TodoService {
     return this.todos.find((t) => t.id === todoId);
   }
 
+  private syncCompletion(todo: Todo): void {
+    if (!todo.subtasks) return;
+
+    if (todo.subtasks.length > 0) {
+      todo.completed = todo.subtasks.every((s) => s.completed);
+    }
+  }
+
   private loadFromStorage(): void {
     const saved = localStorage.getItem(this.storageKey);
     if (saved) {
@@ -63,7 +71,7 @@ export class TodoService {
   addSubtask(todoId: string, text: string): void {
     const todo = this.findTodo(todoId);
     const trimmed = text.trim();
-    if (!todo || trimmed) return;
+    if (!todo || !trimmed) return;
 
     todo.subtasks ??= [];
     todo.subtasks.push({
@@ -71,24 +79,34 @@ export class TodoService {
       text: trimmed,
       completed: false,
     });
+
     this.saveToStorage();
   }
 
   toggleTodo(id: string): void {
     const todo = this.findTodo(id);
+    if (!todo) return;
     if (todo) {
       todo.completed = !todo.completed;
-      this.saveToStorage();
     }
+
+    if (todo.completed && todo.subtasks) {
+      todo.subtasks.forEach((s) => (s.completed = true));
+    }
+    this.saveToStorage();
   }
 
   toggleSubtask(todoId: string, subtaskId: string): void {
     const todo = this.findTodo(todoId);
     if (!todo?.subtasks) return;
+
     const subtask = todo.subtasks.find((s) => s.id === subtaskId);
     if (!subtask) return;
 
     subtask.completed = !subtask.completed;
+
+    this.syncCompletion(todo);
+
     this.saveToStorage();
   }
 
