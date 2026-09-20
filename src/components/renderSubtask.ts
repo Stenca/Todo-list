@@ -1,10 +1,21 @@
 import type { Subtask } from "../models/todo";
 import { escapeHtml } from "../utils/dom";
 
-export function renderSubtask(todoId: string, subtask: Subtask): string {
+export function renderSubtask(
+  todoId: string,
+  subtask: Subtask,
+  animateInId: string | null = null,
+): string {
+  const isEntering = subtask.id === animateInId;
+  console.log("renderSubtask", {
+    subtaskId: subtask.id,
+    animateInId,
+    isEntering,
+  });
+
   return `
         <li 
-        class="subtask-item ${subtask.completed ? "completed" : ""}"
+        class="subtask-item ${subtask.completed ? "completed" : ""} ${isEntering ? "entering" : ""}"
         data-subtask-id="${subtask.id}"
         data-parent-id="${todoId}"
         >

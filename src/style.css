@@ -338,6 +338,15 @@ h1 {
   padding: 0;
 }
 
+.subtask-item.entering {
+  animation: todo-enter 0.3s ease both;
+}
+
+.subtask-item.exiting {
+  animation: todo-exit 0.3s ease forwards;
+  pointer-events: none;
+}
+
 .subtask-checkbox {
   width: 1rem;
   height: 1rem;

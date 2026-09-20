@@ -159,8 +159,20 @@ export class TodoService {
 
   restoreTodo(todo: Todo, index: number): void {
     if (this.todos.some((t) => t.id === todo.id)) return;
+
     const safeIndex = Math.max(0, Math.min(index, this.todos.length));
     this.todos.splice(safeIndex, 0, todo);
+    this.saveToStorage();
+  }
+
+  restoreSubtask(todoId: string, subtask: Subtask, index: number): void {
+    const todo = this.findTodo(todoId);
+    if (!todo?.subtasks) return;
+    if (todo.subtasks.some((s) => s.id === subtask.id)) return;
+
+    const safeIndex = Math.max(0, Math.min(index, todo.subtasks.length));
+    todo.subtasks.splice(safeIndex, 0, subtask);
+
     this.saveToStorage();
   }
 

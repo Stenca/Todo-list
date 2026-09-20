@@ -10,7 +10,6 @@ const UNDO_TOAST_DURATION = 7000;
 const ANIMATION_DURATION = 300;
 const SCROLL_ZONE = 60;
 const SCROLL_SPEED = 3;
-const STAGGER = 40;
 const SEARCH_DEBOUNCE = 200;
 
 let animateInId: string | null = null;
@@ -158,7 +157,7 @@ function handleChange(e: Event): void {
 
   if (target.type === "checkbox" && target.dataset.id) {
     const id = target.dataset.id;
-    animateExit(id, () => {
+    animateExit(`.todo-item[data-id="${id}"]`, () => {
       animateInId = id;
       service.toggleTodo(id);
       render();
@@ -184,18 +183,17 @@ function handleClearCompleted(): void {
 
   if (removed.length === 0) return;
 
-  removed.forEach(({ todo }, i) => {
+  removed.forEach(({ todo }) => {
     const element = document.querySelector(
       `.todo-item[data-id="${todo.id}"]`,
     ) as HTMLElement;
 
     if (!element) return;
 
-    element.style.animationDelay = `${i * STAGGER}ms`;
     element?.classList.add("exiting");
   });
 
-  const totalDelay = ANIMATION_DURATION + (removed.length - 1) * STAGGER;
+  const totalDelay = ANIMATION_DURATION;
 
   setTimeout(() => {
     service.clearCompleted();
@@ -223,7 +221,8 @@ function handleDelete(id: string): void {
   if (index === -1) return;
 
   const todo = todos[index];
-  animateExit(id, () => {
+
+  animateExit(`.todo-item[data-id="${id}"]`, () => {
     service.deleteTodo(id);
     render();
 
@@ -237,10 +236,25 @@ function handleDelete(id: string): void {
 }
 
 function handleDeleteSubtask(todoId: string, subtaskId: string): void {
-  if (!todoId || !subtaskId) return;
+  const todo = service.getTodos().find((t) => t.id === todoId);
+  if (!todo?.subtasks) return;
 
-  service.deleteSubtask(todoId, subtaskId);
-  render();
+  const index = todo.subtasks.findIndex((s) => s.id === subtaskId);
+  if (index === -1) return;
+
+  const subtask = todo.subtasks[index];
+
+  animateExit(`.subtask-item[data-subtask-id="${subtaskId}"]`, () => {
+    service.deleteSubtask(todoId, subtaskId);
+    render();
+
+    showUndoToast("Subtask deleted :", () => {
+      service.restoreSubtask(todoId, subtask, index);
+      animateInId = subtaskId;
+      render();
+      animateInId = null;
+    });
+  });
 }
 function handleEnterSubtask(todoId: string): void {
   addingSubtaskForId = addingSubtaskForId === todoId ? null : todoId;
@@ -601,10 +615,8 @@ function stopAutoScroll(): void {
   }
 }
 
-function animateExit(elementId: string, callback: () => void): void {
-  const element = document.querySelector(
-    `.todo-item[data-id="${elementId}"]`,
-  ) as HTMLElement;
+function animateExit(selector: string, callback: () => void): void {
+  const element = document.querySelector<HTMLElement>(selector);
   if (!element) {
     callback();
     return;

@@ -50,7 +50,7 @@ export function renderTodo(
           ? `
             <ul class="subtask-list">
             <li class="subtask-divider"></li>
-              ${subtasks.map((s) => renderSubtask(todo.id, s)).join("")}
+              ${subtasks.map((s) => renderSubtask(todo.id, s, animateInId)).join("")}
               ${
                 isAdding
                   ? `
