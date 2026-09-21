@@ -156,8 +156,24 @@ function handleChange(e: Event): void {
   if (target.classList.contains("subtask-checkbox")) {
     const todoId = target.dataset.parentId;
     const subtaskId = target.dataset.subtaskId;
-    if (todoId && subtaskId) {
-      service.toggleSubtask(todoId, subtaskId);
+    if (!todoId || !subtaskId) return;
+    const wasCompleted = service
+      .getTodos()
+      .find((t) => t.id === todoId)?.completed;
+
+    service.toggleSubtask(todoId, subtaskId);
+
+    const isCompleted = service
+      .getTodos()
+      .find((t) => t.id === todoId)?.completed;
+
+    if (wasCompleted !== isCompleted) {
+      animateExit(`.todo-item[data-id="${todoId}"]`, () => {
+        animateInId = todoId;
+        render();
+        animateInId = null;
+      });
+    } else {
       render();
     }
     return;
