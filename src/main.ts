@@ -21,7 +21,7 @@ let undoTimer: number | null = null;
 let searchQuery = "";
 let searchTimeout: number | null = null;
 
-const collapsedTodos = new Set<string>();
+const expandedTodos = new Set<string>();
 const service = new TodoService();
 const app = getElement<HTMLDivElement>("#app");
 
@@ -67,7 +67,7 @@ function render() {
       </div>
     </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, collapsedTodos)}
+      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, expandedTodos)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -285,10 +285,10 @@ function handleDeleteSubtask(todoId: string, subtaskId: string): void {
 }
 
 function handleToggleSubtasks(id: string): void {
-  if (collapsedTodos.has(id)) {
-    collapsedTodos.delete(id);
+  if (expandedTodos.has(id)) {
+    expandedTodos.delete(id);
   } else {
-    collapsedTodos.add(id);
+    expandedTodos.add(id);
   }
   render();
 }

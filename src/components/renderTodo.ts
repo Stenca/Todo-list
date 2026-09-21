@@ -8,10 +8,10 @@ export function renderTodo(
   addingSubtaskForId: string | null = null,
   collapsedTodos: Set<string> = new Set(),
 ): string {
-  const isCollapsed = collapsedTodos.has(todo.id);
+  const isExpanded = collapsedTodos.has(todo.id);
   const subtasks = todo.subtasks ?? [];
   const isAdding = addingSubtaskForId === todo.id;
-  const showSubtasks = (subtasks.length > 0 && !isCollapsed) || isAdding;
+  const showSubtasks = (subtasks.length > 0 && isExpanded) || isAdding;
 
   return `
     <li 
@@ -36,7 +36,7 @@ export function renderTodo(
         ${
           subtasks.length > 0
             ? `<button data-id="${todo.id}" class="todo-item-toggle-subtasks">
-              ${isCollapsed ? "▸" : "▾"}</button>`
+              ${isExpanded ? "▾" : "▸"}</button>`
             : ""
         }
         <button data-id="${todo.id}" class="todo-item-add-subtask" aria-label="Add subtask">+</button>
