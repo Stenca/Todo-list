@@ -37,31 +37,33 @@ function render() {
   app.innerHTML = `
     <h1>Todo List</h1>
     ${renderTodoForm()}
-    <div id="todo-filters" class="todo-filters">
-      <button
-        data-filter="all"
-        class="${currentFilter === "all" ? "active" : ""}"
-      >All
-      </button>
-      <button
-        data-filter="active"
-        class="${currentFilter === "active" ? "active" : ""}"
-      >Active
-      </button>
-      <button
-        data-filter="completed"
-        class="${currentFilter === "completed" ? "active" : ""}"
-      >Completed
-      </button>
-    </div>
-    <div class="todo-search">
-      <input
-        type="search"
-        id="todo-search"
-        class="todo-search-input"
-        placeholder="Search todos..."
-        value="${escapeHtml(searchQuery)}"
-      />
+    <div class="toolbar">
+      <div id="todo-filters" class="todo-filters">
+        <button
+          data-filter="all"
+          class="${currentFilter === "all" ? "active" : ""}"
+        >All
+        </button>
+        <button
+          data-filter="active"
+          class="${currentFilter === "active" ? "active" : ""}"
+        >Active
+        </button>
+        <button
+          data-filter="completed"
+          class="${currentFilter === "completed" ? "active" : ""}"
+        >Completed
+        </button>
+      </div>
+      <div class="todo-search">
+        <input
+          type="search"
+          id="todo-search"
+          class="todo-search-input"
+          placeholder="Search todos..."
+          value="${escapeHtml(searchQuery)}"
+        />
+      </div>
     </div>
     <div class="todo-list-container">
       ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId)}

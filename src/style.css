@@ -52,11 +52,11 @@ body {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 1.25rem;
   max-height: calc(100vh - 6rem);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   overflow: hidden;
 }
 
@@ -65,12 +65,13 @@ h1 {
   font-size: 2rem;
   font-weight: 600;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
 .todo-form {
   display: flex;
   gap: 0.75rem;
+  margin: 0;
   margin-bottom: 1.5rem;
 }
 
@@ -108,8 +109,48 @@ h1 {
   opacity: 0.8;
 }
 
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.todo-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.todo-filters button {
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.todo-filters button:hover {
+  background: var(--bg-hover);
+}
+
+.todo-filters button.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-color: var(--accent);
+}
+
+.todo-filters button.active:hover {
+  opacity: 0.9;
+}
+
 .todo-search {
-  margin-bottom: 1rem;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
 .todo-search-input {
@@ -513,40 +554,6 @@ h1 {
   background: var(--border-color);
 }
 
-.todo-filters {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.todo-filters button {
-  padding: 0.5rem 1.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.todo-filters button:hover {
-  background: var(--bg-hover);
-}
-
-.todo-filters button.active {
-  background: var(--accent);
-  color: var(--bg-primary);
-  border-color: var(--accent);
-  box-shadow: 0 2px 8px rgba(192, 132, 252, 0.3);
-}
-
-.todo-filters button.active:hover {
-  background: var(--accent);
-  opacity: 0.9;
-}
-
 .undo-toast {
   position: fixed;
   bottom: 2rem;
@@ -666,9 +673,22 @@ h1 {
     width: 100%;
   }
 
-  .todo-stats {
+  .toolbar {
     flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
+    align-items: stretch;
+  }
+
+  .todo-filters {
+    justify-content: center;
+  }
+
+  .todo-stats {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    margin: 0;
   }
 }
