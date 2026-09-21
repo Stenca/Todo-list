@@ -21,6 +21,7 @@ let undoTimer: number | null = null;
 let searchQuery = "";
 let searchTimeout: number | null = null;
 
+const collapsedTodos = new Set<string>();
 const service = new TodoService();
 const app = getElement<HTMLDivElement>("#app");
 
@@ -66,7 +67,7 @@ function render() {
       </div>
     </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId)}
+      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, collapsedTodos)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -282,8 +283,18 @@ function handleDeleteSubtask(todoId: string, subtaskId: string): void {
     });
   });
 }
-function handleEnterSubtask(todoId: string): void {
-  addingSubtaskForId = addingSubtaskForId === todoId ? null : todoId;
+
+function handleToggleSubtasks(id: string): void {
+  if (collapsedTodos.has(id)) {
+    collapsedTodos.delete(id);
+  } else {
+    collapsedTodos.add(id);
+  }
+  render();
+}
+
+function handleEnterSubtask(id: string): void {
+  addingSubtaskForId = addingSubtaskForId === id ? null : id;
   render();
 }
 
@@ -313,18 +324,22 @@ function handleClick(e: Event): void {
 
   if (!todoId || !todoItem) return;
 
+  if (target.classList.contains("todo-item-toggle-subtasks")) {
+    handleToggleSubtasks(todoId);
+    return;
+  }
+
   if (target.classList.contains("todo-item-add-subtask")) {
     handleEnterSubtask(todoId);
     return;
   }
 
-  if (target.classList.contains("todo-item-delete")) {
-    handleDelete(todoId);
-    return;
-  }
-
   if (target.classList.contains("todo-item-edit")) {
     handleEdit(todoId);
+    return;
+  }
+  if (target.classList.contains("todo-item-delete")) {
+    handleDelete(todoId);
     return;
   }
 

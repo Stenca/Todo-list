@@ -259,6 +259,22 @@ h1 {
   opacity: 0.5;
 }
 
+.todo-item-toggle-subtasks {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.todo-item-toggle-subtasks:hover {
+  color: var(--accent);
+}
+
 .todo-item-add-subtask {
   background: none;
   border: none;

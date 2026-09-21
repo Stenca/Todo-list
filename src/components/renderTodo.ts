@@ -6,9 +6,12 @@ export function renderTodo(
   todo: Todo,
   animateInId: string | null = null,
   addingSubtaskForId: string | null = null,
+  collapsedTodos: Set<string> = new Set(),
 ): string {
+  const isCollapsed = collapsedTodos.has(todo.id);
   const subtasks = todo.subtasks ?? [];
   const isAdding = addingSubtaskForId === todo.id;
+  const showSubtasks = (subtasks.length > 0 && !isCollapsed) || isAdding;
 
   return `
     <li 
@@ -30,13 +33,19 @@ export function renderTodo(
         >
           ${escapeHtml(todo.text)}
         </span>
+        ${
+          subtasks.length > 0
+            ? `<button data-id="${todo.id}" class="todo-item-toggle-subtasks">
+              ${isCollapsed ? "▸" : "▾"}</button>`
+            : ""
+        }
         <button data-id="${todo.id}" class="todo-item-add-subtask" aria-label="Add subtask">+</button>
         <button data-id="${todo.id}" class="todo-item-edit" aria-label="Edit todo">✎</button>
         <button data-id="${todo.id}" class="todo-item-delete" aria-label="Delete todo">×</button>
       </div>
 
       ${
-        subtasks.length > 0 || isAdding
+        showSubtasks
           ? `
             <ul class="subtask-list">
             <li class="subtask-divider"></li>

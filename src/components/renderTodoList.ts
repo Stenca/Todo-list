@@ -8,6 +8,7 @@ export function renderTodoList(
   animateInId: string | null = null,
   searchQuery = "",
   addingSubtaskForId: string | null = null,
+  collapsedTodos: Set<string> = new Set(),
 ): string {
   if (todos.length === 0) {
     return `<div class="todo-empty">${emptyMessageFor(filter, searchQuery)}</div>`;
@@ -18,7 +19,7 @@ export function renderTodoList(
 
   return `
     <ul class="todo-list">
-      ${active.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId)).join("")}
+      ${active.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId, collapsedTodos)).join("")}
       ${
         completed.length > 0
           ? `
