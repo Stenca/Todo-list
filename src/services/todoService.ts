@@ -1,4 +1,5 @@
 import { type Todo, type TodoFilter, type Subtask } from "../models/todo";
+import { capitalize } from "../utils/string";
 
 export class TodoService {
   private todos: Todo[] = [];
@@ -58,7 +59,7 @@ export class TodoService {
   addTodo(text: string): Todo {
     const todo: Todo = {
       id: crypto.randomUUID(),
-      text: text.trim(),
+      text: capitalize(text),
       completed: false,
       createdAt: new Date(),
       subtasks: [],
@@ -70,7 +71,7 @@ export class TodoService {
 
   addSubtask(todoId: string, text: string): void {
     const todo = this.findTodo(todoId);
-    const trimmed = text.trim();
+    const trimmed = capitalize(text);
     if (!todo || !trimmed) return;
 
     todo.subtasks ??= [];
@@ -112,7 +113,7 @@ export class TodoService {
 
   editTodo(id: string, newContent: string): void {
     const todo = this.findTodo(id);
-    const trimmed = newContent.trim();
+    const trimmed = capitalize(newContent);
     if (todo && trimmed) {
       todo.text = trimmed;
       this.saveToStorage();
@@ -121,7 +122,7 @@ export class TodoService {
 
   editSubtask(todoId: string, subtaskId: string, newContent: string): void {
     const todo = this.findTodo(todoId);
-    const trimmed = newContent.trim();
+    const trimmed = capitalize(newContent);
     if (!todo || !trimmed) return;
     const subtask = todo.subtasks.find((s) => s.id === subtaskId);
     if (!subtask) return;
