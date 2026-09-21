@@ -21,7 +21,11 @@ export function renderSubtask(
                 data-parent-id="${todoId}"
                 class="subtask-checkbox"
             />
-            <span class="subtask-text">${escapeHtml(subtask.text)}</span>
+            <span
+                class="subtask-text"
+                title="${escapeHtml(subtask.text)}">
+                    ${escapeHtml(subtask.text)}
+            </span>
             <button
                 data-subtask-id="${subtask.id}"
                 data-parent-id="${todoId}"

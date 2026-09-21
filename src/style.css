@@ -204,17 +204,23 @@ h1 {
   background: var(--accent);
 }
 
-.todo-item {
-  flex-basis: 100%;
+.todo-main {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.todo-item {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   background: var(--bg-secondary);
   border-radius: 8px;
   margin-bottom: 0.5rem;
   overflow: hidden;
+  min-width: 0;
   transition: background-color 0.2s ease;
 }
 
@@ -228,23 +234,24 @@ h1 {
   accent-color: var(--accent);
   cursor: pointer;
   flex-shrink: 0;
-  .drag-handle,
-  .todo-item-add-subtask,
-  .todo-item-edit,
-  .todo-item-delete {
-    flex-shrink: 0;
-  }
+}
+
+.drag-handle,
+.todo-item-add-subtask,
+.todo-item-edit,
+.todo-item-delete {
+  flex-shrink: 0;
 }
 
 .todo-item-text {
-  text-align: left;
   flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--text-primary);
   font-size: 1rem;
-  word-wrap: break-word;
-  word-break: break-word;
-  min-width: 8rem;
-  max-width: 100%;
+  text-align: left;
 }
 
 .todo-item-text.completed {
@@ -361,7 +368,6 @@ h1 {
 }
 
 .subtask-list {
-  flex-basis: 100%;
   list-style: none;
   padding: 0.5rem 0 0 1.5rem;
   margin: 0;
@@ -421,6 +427,10 @@ h1 {
 
 .subtask-text {
   flex: 1;
+  min-width: 0; /* ← lets it shrink */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--text-primary);
 }
 

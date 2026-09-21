@@ -16,34 +16,24 @@ export function renderTodo(
         data-id="${todo.id}" 
         draggable="true"
     >
+      <div class="todo-main">
         <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
         <input 
-            type="checkbox" 
-            ${todo.completed ? "checked" : ""}
-            data-id="${todo.id}"
-            class="todo-item-checkbox"
+          type="checkbox" 
+          ${todo.completed ? "checked" : ""}
+          data-id="${todo.id}"
+          class="todo-item-checkbox"
         />
-        <span class="todo-item-text ${todo.completed ? "completed" : ""}">
-            ${escapeHtml(todo.text)}
+        <span 
+          class="todo-item-text ${todo.completed ? "completed" : ""}"
+          title="${escapeHtml(todo.text)}"
+        >
+          ${escapeHtml(todo.text)}
         </span>
-        <button 
-            data-id="${todo.id}"
-            class="todo-item-add-subtask"
-            title="Add subtask"
-        >+
-        </button>
-        <button
-            data-id="${todo.id}"
-            class="todo-item-edit"
-            title="Edit"
-        >✎
-        </button>
-        <button
-        data-id="${todo.id}"
-        class="todo-item-delete"
-        title="Delete"
-        >×
-        </button>
+        <button data-id="${todo.id}" class="todo-item-add-subtask" aria-label="Add subtask">+</button>
+        <button data-id="${todo.id}" class="todo-item-edit" aria-label="Edit todo">✎</button>
+        <button data-id="${todo.id}" class="todo-item-delete" aria-label="Delete todo">×</button>
+      </div>
 
       ${
         subtasks.length > 0 || isAdding
