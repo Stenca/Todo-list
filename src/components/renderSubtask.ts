@@ -7,11 +7,6 @@ export function renderSubtask(
   animateInId: string | null = null,
 ): string {
   const isEntering = subtask.id === animateInId;
-  console.log("renderSubtask", {
-    subtaskId: subtask.id,
-    animateInId,
-    isEntering,
-  });
 
   return `
         <li 

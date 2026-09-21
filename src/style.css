@@ -296,6 +296,29 @@ h1 {
   pointer-events: none;
 }
 
+.drag-handle {
+  color: var(--text-secondary);
+  opacity: 0.6;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0 0.25rem;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 .subtask-list {
   flex-basis: 100%;
   list-style: none;
