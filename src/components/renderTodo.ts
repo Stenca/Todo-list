@@ -6,9 +6,9 @@ export function renderTodo(
   todo: Todo,
   animateInId: string | null = null,
   addingSubtaskForId: string | null = null,
-  collapsedTodos: Set<string> = new Set(),
+  expandedTodos: Set<string> = new Set(),
 ): string {
-  const isExpanded = collapsedTodos.has(todo.id);
+  const isExpanded = expandedTodos.has(todo.id);
   const subtasks = todo.subtasks ?? [];
   const isAdding = addingSubtaskForId === todo.id;
   const showSubtasks = (subtasks.length > 0 && isExpanded) || isAdding;

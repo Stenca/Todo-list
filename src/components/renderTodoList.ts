@@ -26,7 +26,7 @@ export function renderTodoList(
             <li class="todo-divider">
               <span>Completed (${completed.length})</span>
             </li>
-            ${completed.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId)).join("")}
+            ${completed.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId, expandedTodos)).join("")}
           `
           : ""
       }
