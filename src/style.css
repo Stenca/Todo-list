@@ -1,13 +1,17 @@
 :root {
-  --bg-primary: #16171d;
-  --bg-secondary: #1f2028;
-  --bg-hover: #2e303a;
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --border-color: #2e303a;
+  --bg-page: #0b0c10;
+  --bg-primary: #14161c;
+  --bg-secondary: #1c1f27;
+  --bg-hover: #262a35;
+
+  --text-primary: #e8eaf0;
+  --text-secondary: #8b90a0;
+
+  --border-color: #2a2e3a;
+
   --accent: #ff44cc;
-  --danger: red;
-  --danger-hover: #dc2626;
+  --accent-hover: #ff6ad5;
+
   --transition-hover: 0.2s ease;
 }
 
@@ -31,7 +35,7 @@ input,
 }
 
 body {
-  background: var(--bg-primary);
+  background: var(--bg-page);
   display: flex;
   flex-direction: column;
   align-items: center;
