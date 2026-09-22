@@ -69,6 +69,8 @@ export class TodoService {
     return todo;
   }
 
+  setDueDate(id: string, data: Date | null): void {}
+
   addSubtask(todoId: string, text: string): void {
     const todo = this.findTodo(todoId);
     const trimmed = capitalize(text);

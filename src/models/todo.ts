@@ -3,6 +3,7 @@ export interface Todo {
   text: string;
   completed: boolean;
   createdAt: Date;
+  dueDate?: Date;
   subtasks: Subtask[];
 }
 

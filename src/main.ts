@@ -64,6 +64,11 @@ function render() {
           placeholder="Search todos..."
           value="${escapeHtml(searchQuery)}"
         />
+        ${
+          searchQuery.trim()
+            ? `<button data-action="clear-search" class="todo-search-clear">×</button>`
+            : ""
+        }
       </div>
     </div>
     <div class="todo-list-container">
@@ -201,6 +206,13 @@ function handleFilterClick(target: HTMLElement): void {
   render();
 }
 
+function handleClearSearch(): void {
+  searchQuery = "";
+  render();
+  document.getElementById("todo-search")?.focus();
+  return;
+}
+
 function handleClearCompleted(): void {
   const todos = service.getTodos();
 
@@ -319,6 +331,11 @@ function handleClick(e: Event): void {
 
   if (target.dataset.filter) {
     handleFilterClick(target);
+    return;
+  }
+
+  if (target.dataset.action === "clear-search") {
+    handleClearSearch();
     return;
   }
 
