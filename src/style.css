@@ -207,6 +207,30 @@ h1 {
   display: none;
 }
 
+.sort-toggle {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sort-toggle:hover {
+  color: var(--accent);
+}
+
+.sort-toggle.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
 .todo-list {
   list-style: none;
   padding: 0;
@@ -388,6 +412,10 @@ h1 {
   animation: todo-enter 0.3s ease both;
 }
 
+.todo-item.completed .todo-due {
+  opacity: 0.5;
+}
+
 .todo-item.exiting {
   opacity: 0;
   transform: translateX(-20px) scale(0.95);
@@ -471,6 +499,11 @@ h1 {
 
 .drag-handle:active {
   cursor: grabbing;
+}
+
+.drag-handle.disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
 }
 
 .subtask-list {

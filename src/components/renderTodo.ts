@@ -9,6 +9,7 @@ export function renderTodo(
   addingSubtaskForId: string | null = null,
   expandedTodos: Set<string> = new Set(),
   editingDueDateId: string | null = null,
+  sortByDueDate = false,
 ): string {
   const isExpanded = expandedTodos.has(todo.id);
   const subtasks = todo.subtasks ?? [];
@@ -17,12 +18,12 @@ export function renderTodo(
 
   return `
     <li 
-        class="todo-item ${todo.id === animateInId ? "entering" : ""}"  
+        class="todo-item ${todo.completed ? "completed" : ""} ${todo.id === animateInId ? "entering" : ""}"  
         data-id="${todo.id}" 
         draggable="true"
     >
       <div class="todo-main">
-        <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+        <span class="drag-handle ${sortByDueDate ? "disabled" : ""}" title="Drag to reorder">⋮⋮</span>
         <input 
           type="checkbox" 
           ${todo.completed ? "checked" : ""}

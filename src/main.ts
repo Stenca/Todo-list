@@ -14,6 +14,7 @@ const SCROLL_SPEED = 3;
 const SEARCH_DEBOUNCE = 200;
 
 let editingDueDateId: string | null = null;
+let sortByDueDate = false;
 let lastOpenedDueDateId: string | null = null;
 let animateInId: string | null = null;
 let addingSubtaskForId: string | null = null;
@@ -73,9 +74,13 @@ function render() {
             : ""
         }
       </div>
+      <button
+        class="sort-toggle ${sortByDueDate ? "active" : ""}"
+        title="Sort by due date"
+      >⇅</button>
     </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, expandedTodos, editingDueDateId)}
+      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, expandedTodos, editingDueDateId, sortByDueDate)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -127,7 +132,7 @@ function setupEventListeners() {
   app.addEventListener("click", handleClick);
   app.addEventListener("keydown", handleGlobalKeydown);
   app.addEventListener("input", handleSearchInput);
-  // app.addEventListener("focusout", handleDateFocusOut);
+  app.addEventListener("focusout", handleDateFocusOut);
 
   app.addEventListener("dragstart", handleDragStart);
   app.addEventListener("dragend", handleDragEnd);
@@ -252,6 +257,11 @@ function handleClearSearch(): void {
   render();
   document.getElementById("todo-search")?.focus();
   return;
+}
+
+function handleToggleSort(): void {
+  sortByDueDate = !sortByDueDate;
+  render();
 }
 
 function handleClearCompleted(): void {
@@ -382,6 +392,11 @@ function handleClick(e: Event): void {
 
   if (target.classList.contains("todo-search-clear")) {
     handleClearSearch();
+    return;
+  }
+
+  if (target.classList.contains("sort-toggle")) {
+    handleToggleSort();
     return;
   }
 
@@ -534,7 +549,7 @@ function handleSearchInput(e: Event): void {
 function handleDragStart(e: DragEvent): void {
   const target = e.target as HTMLElement;
   const todoItem = target.closest(".todo-item") as HTMLElement;
-  if (!todoItem) return;
+  if (!todoItem || sortByDueDate) return;
 
   draggedId = todoItem.dataset.id || null;
   if (!draggedId) return;
@@ -765,11 +780,24 @@ function animateExit(selector: string, callback: () => void): void {
 }
 
 function getVisibleTodos(): Todo[] {
-  const todos = service.getSortedTodos(currentFilter);
-  if (!searchQuery.trim()) return todos;
+  let todos = service.getSortedTodos(currentFilter);
 
-  const q = searchQuery.toLowerCase();
-  return todos.filter((t) => t.text.toLowerCase().includes(q));
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    todos = todos.filter((t) => t.text.toLowerCase().includes(q));
+  }
+
+  if (sortByDueDate) {
+    todos = [...todos].sort(byDueDate);
+  }
+  return todos;
+}
+
+function byDueDate(a: Todo, b: Todo): number {
+  if (!a.dueDate && !b.dueDate) return 0;
+  if (!a.dueDate) return 1;
+  if (!b.dueDate) return -1;
+  return a.dueDate.getTime() - b.dueDate.getTime();
 }
 
 setupEventListeners();
