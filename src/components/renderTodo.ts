@@ -1,4 +1,5 @@
 import type { Todo } from "../models/todo";
+import { formatDueDate, toDateInputValue, isOverdue } from "../utils/date";
 import { escapeHtml } from "../utils/dom";
 import { renderSubtask } from "./renderSubtask";
 
@@ -7,6 +8,7 @@ export function renderTodo(
   animateInId: string | null = null,
   addingSubtaskForId: string | null = null,
   expandedTodos: Set<string> = new Set(),
+  editingDueDateId: string | null = null,
 ): string {
   const isExpanded = expandedTodos.has(todo.id);
   const subtasks = todo.subtasks ?? [];
@@ -33,6 +35,26 @@ export function renderTodo(
         >
           ${escapeHtml(todo.text)}
         </span>
+        ${
+          editingDueDateId === todo.id
+            ? `<input
+                type ="date"
+                class="todo-due-input"
+                data-id="${todo.id}"
+                value="${todo.dueDate ? toDateInputValue(todo.dueDate) : ""}"
+              />`
+            : todo.dueDate
+              ? `<span
+              class="todo-due ${isOverdue(todo) ? "overdue" : ""}"
+              data-action="edit-due" 
+              data-id="${todo.id}">
+                ${formatDueDate(todo.dueDate)}
+            </span>`
+              : `<span
+              class="todo-due-add"
+              data-id="${todo.id}"
+          >📅</span>`
+        }
         ${
           subtasks.length > 0
             ? `<button data-id="${todo.id}" class="todo-item-toggle-subtasks">

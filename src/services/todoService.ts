@@ -13,6 +13,10 @@ export class TodoService {
     return this.todos.find((t) => t.id === todoId);
   }
 
+  isTodoCompleted(todoId: string): boolean {
+    return this.todos.find((t) => t.id === todoId)?.completed ?? false;
+  }
+
   private syncCompletion(todo: Todo): void {
     if (!todo.subtasks) return;
 
@@ -26,6 +30,7 @@ export class TodoService {
     if (saved) {
       this.todos = JSON.parse(saved, (key, value) => {
         if (key === "createdAt") return new Date(value);
+        if (key === "dueDate") return new Date(value);
         return value;
       });
     }
@@ -69,7 +74,16 @@ export class TodoService {
     return todo;
   }
 
-  setDueDate(id: string, data: Date | null): void {}
+  setDueDate(id: string, date: Date | null): void {
+    const todo = this.findTodo(id);
+    if (!todo) return;
+    if (date) {
+      todo.dueDate = date;
+    } else {
+      delete todo.dueDate;
+    }
+    this.saveToStorage();
+  }
 
   addSubtask(todoId: string, text: string): void {
     const todo = this.findTodo(todoId);

@@ -9,6 +9,7 @@ export function renderTodoList(
   searchQuery = "",
   addingSubtaskForId: string | null = null,
   expandedTodos: Set<string> = new Set(),
+  editingDueDateId: string | null = null,
 ): string {
   if (todos.length === 0) {
     return `<div class="todo-empty">${emptyMessageFor(filter, searchQuery)}</div>`;
@@ -19,14 +20,14 @@ export function renderTodoList(
 
   return `
     <ul class="todo-list">
-      ${active.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId, expandedTodos)).join("")}
+      ${active.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId, expandedTodos, editingDueDateId)).join("")}
       ${
         completed.length > 0
           ? `
             <li class="todo-divider">
               <span>Completed (${completed.length})</span>
             </li>
-            ${completed.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId, expandedTodos)).join("")}
+            ${completed.map((todo) => renderTodo(todo, animateInId, addingSubtaskForId, expandedTodos, editingDueDateId)).join("")}
           `
           : ""
       }

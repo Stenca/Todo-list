@@ -4,6 +4,7 @@ import { renderTodoList } from "./components/renderTodoList";
 import { renderTodoForm } from "./components/renderTodoForm";
 import { renderStats } from "./components/renderTodoStats";
 import { escapeHtml, getElement } from "./utils/dom";
+import { fromDateInputValue } from "./utils/date";
 import type { Todo, TodoFilter } from "./models/todo";
 
 const UNDO_TOAST_DURATION = 7000;
@@ -12,6 +13,8 @@ const SCROLL_ZONE = 60;
 const SCROLL_SPEED = 3;
 const SEARCH_DEBOUNCE = 200;
 
+let editingDueDateId: string | null = null;
+let lastOpenedDueDateId: string | null = null;
 let animateInId: string | null = null;
 let addingSubtaskForId: string | null = null;
 let scrollAnimationId: number | null = null;
@@ -66,13 +69,13 @@ function render() {
         />
         ${
           searchQuery.trim()
-            ? `<button data-action="clear-search" class="todo-search-clear">×</button>`
+            ? `<button class="todo-search-clear">×</button>`
             : ""
         }
       </div>
     </div>
     <div class="todo-list-container">
-      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, expandedTodos)}
+      ${renderTodoList(todos, currentFilter, animateInId, searchQuery, addingSubtaskForId, expandedTodos, editingDueDateId)}
     </div>
     <div id="todo-stats">
       ${renderStats(stats.total, stats.completed, stats.remaining)}
@@ -94,6 +97,22 @@ function render() {
     });
   }
 
+  if (editingDueDateId) {
+    requestAnimationFrame(() => {
+      const input = document.querySelector<HTMLInputElement>(".todo-due-input");
+      if (!input) return;
+
+      input.focus();
+
+      if (lastOpenedDueDateId !== editingDueDateId) {
+        input.showPicker?.();
+        lastOpenedDueDateId = editingDueDateId;
+      }
+    });
+  } else {
+    lastOpenedDueDateId = null;
+  }
+
   const newContainer = document.querySelector(
     ".todo-list-container",
   ) as HTMLElement;
@@ -108,6 +127,7 @@ function setupEventListeners() {
   app.addEventListener("click", handleClick);
   app.addEventListener("keydown", handleGlobalKeydown);
   app.addEventListener("input", handleSearchInput);
+  // app.addEventListener("focusout", handleDateFocusOut);
 
   app.addEventListener("dragstart", handleDragStart);
   app.addEventListener("dragend", handleDragEnd);
@@ -162,40 +182,61 @@ function handleChange(e: Event): void {
   const target = e.target as HTMLInputElement;
 
   if (target.classList.contains("subtask-checkbox")) {
-    const todoId = target.dataset.parentId;
-    const subtaskId = target.dataset.subtaskId;
-    if (!todoId || !subtaskId) return;
-    const wasCompleted = service
-      .getTodos()
-      .find((t) => t.id === todoId)?.completed;
-
-    service.toggleSubtask(todoId, subtaskId);
-
-    const isCompleted = service
-      .getTodos()
-      .find((t) => t.id === todoId)?.completed;
-
-    if (wasCompleted !== isCompleted) {
-      animateExit(`.todo-item[data-id="${todoId}"]`, () => {
-        animateInId = todoId;
-        render();
-        animateInId = null;
-      });
-    } else {
-      render();
-    }
+    handleSubtaskToggle(target);
     return;
   }
 
-  if (target.type === "checkbox" && target.dataset.id) {
-    const id = target.dataset.id;
-    animateExit(`.todo-item[data-id="${id}"]`, () => {
-      animateInId = id;
-      service.toggleTodo(id);
+  if (target.classList.contains("todo-item-checkbox")) {
+    handleTodoToggle(target);
+    return;
+  }
+
+  if (target.classList.contains("todo-due-input")) {
+    handleDueDateChange(target);
+    return;
+  }
+}
+
+function handleTodoToggle(el: HTMLInputElement): void {
+  const id = el.closest<HTMLElement>(".todo-item")?.dataset.id;
+  if (!id) return;
+
+  animateExit(`.todo-item[data-id="${id}"]`, () => {
+    animateInId = id;
+    service.toggleTodo(id);
+    render();
+    animateInId = null;
+  });
+}
+
+function handleSubtaskToggle(el: HTMLInputElement): void {
+  const subtaskId = el.closest<HTMLElement>(".subtask-item")?.dataset.subtaskId;
+  const todoId = el.closest<HTMLElement>(".todo-item")?.dataset.id;
+  if (!subtaskId || !todoId) return;
+
+  const wasCompleted = service.isTodoCompleted(todoId);
+  service.toggleSubtask(todoId, subtaskId);
+  const isCompleted = service.isTodoCompleted(todoId);
+
+  if (wasCompleted !== isCompleted) {
+    animateExit(todoId, () => {
+      animateInId = todoId;
       render();
       animateInId = null;
     });
+  } else {
+    render();
   }
+}
+
+function handleDueDateChange(input: HTMLInputElement): void {
+  const id = input.dataset.id;
+  if (!id) return;
+
+  const date = fromDateInputValue(input.value);
+  service.setDueDate(id, date);
+  editingDueDateId = null;
+  render();
 }
 
 function handleFilterClick(target: HTMLElement): void {
@@ -252,6 +293,11 @@ function handleClearCompleted(): void {
       },
     );
   }, totalDelay);
+}
+
+function handleEditDueDate(id: string): void {
+  editingDueDateId = id;
+  render();
 }
 
 function handleDelete(id: string): void {
@@ -334,7 +380,7 @@ function handleClick(e: Event): void {
     return;
   }
 
-  if (target.dataset.action === "clear-search") {
+  if (target.classList.contains("todo-search-clear")) {
     handleClearSearch();
     return;
   }
@@ -355,6 +401,15 @@ function handleClick(e: Event): void {
     handleEdit(todoId);
     return;
   }
+
+  if (
+    target.classList.contains("todo-due") ||
+    target.classList.contains("todo-due-add")
+  ) {
+    handleEditDueDate(todoId);
+    return;
+  }
+
   if (target.classList.contains("todo-item-delete")) {
     handleDelete(todoId);
     return;
@@ -390,6 +445,30 @@ function handleGlobalKeydown(e: KeyboardEvent): void {
     handleEditKeyDown(e);
     return;
   }
+
+  if (editingDueDateId) {
+    handleDateKeydown(e);
+    return;
+  }
+}
+
+function handleDateKeydown(e: KeyboardEvent): void {
+  if (e.key === "Escape" && editingDueDateId) {
+    e.preventDefault();
+    editingDueDateId = null;
+    render();
+  }
+}
+
+function handleDateFocusOut(e: FocusEvent): void {
+  const target = e.target as HTMLElement;
+  if (!target.classList.contains("todo-due-input")) return;
+
+  setTimeout(() => {
+    if (!editingDueDateId) return;
+    editingDueDateId = null;
+    render();
+  }, 200);
 }
 
 function handleSubtaskKeyDown(e: KeyboardEvent): void {
