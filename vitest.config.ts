@@ -9,4 +9,5 @@ export default defineConfig({
       reporter: ["text", "html"],
     },
   },
+  base: "/Todo-list/",
 });
