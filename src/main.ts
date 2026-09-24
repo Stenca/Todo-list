@@ -13,6 +13,13 @@ const SCROLL_ZONE = 60;
 const SCROLL_SPEED = 3;
 const SEARCH_DEBOUNCE = 200;
 
+type Theme = "light" | "dark";
+
+let theme: Theme =
+  (localStorage.getItem("theme") as Theme) ??
+  (window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light");
 let editingDueDateId: string | null = null;
 let sortByDueDate = false;
 let lastOpenedDueDateId: string | null = null;
@@ -24,12 +31,11 @@ let draggedId: string | null = null;
 let undoTimer: number | null = null;
 let searchQuery = "";
 let searchTimeout: number | null = null;
+let currentFilter: TodoFilter = "all";
 
 const expandedTodos = new Set<string>();
 const service = new TodoService();
 const app = getElement<HTMLDivElement>("#app");
-
-let currentFilter: TodoFilter = "all";
 
 function render() {
   const container = document.querySelector(
@@ -40,7 +46,12 @@ function render() {
   const stats = service.getStats();
 
   app.innerHTML = `
-    <h1>Todo List</h1>
+  <header class="app-header">
+      <h1>Todo List</h1>
+      <button class="theme-toggle" title="Toggle theme">
+        ${theme === "dark" ? "☀️" : "🌙"}
+      </button>
+    </header>
     ${renderTodoForm()}
     <div class="toolbar">
       <div id="todo-filters" class="todo-filters">
@@ -264,6 +275,12 @@ function handleToggleSort(): void {
   render();
 }
 
+function handleToggleTheme(): void {
+  theme = theme === "dark" ? "light" : "dark";
+  applyTheme();
+  render();
+}
+
 function handleClearCompleted(): void {
   const todos = service.getTodos();
 
@@ -397,6 +414,11 @@ function handleClick(e: Event): void {
 
   if (target.classList.contains("sort-toggle")) {
     handleToggleSort();
+    return;
+  }
+
+  if (target.classList.contains("theme-toggle")) {
+    handleToggleTheme();
     return;
   }
 
@@ -779,6 +801,11 @@ function animateExit(selector: string, callback: () => void): void {
   setTimeout(callback, ANIMATION_DURATION);
 }
 
+function applyTheme(): void {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+}
+
 function getVisibleTodos(): Todo[] {
   let todos = service.getSortedTodos(currentFilter);
 
@@ -801,4 +828,5 @@ function byDueDate(a: Todo, b: Todo): number {
 }
 
 setupEventListeners();
+applyTheme();
 render();
